@@ -46,3 +46,42 @@ class DepartmentActivityItem(BaseModel):
     resolved: int
     closed: int
     total: int
+
+
+# ---------- Complaint List ----------
+class ComplaintOut(BaseModel):
+    id: int
+    title: str
+    description: str | None
+    severity: str
+    status: str
+    department_name: str | None
+    assigned_staff_name: str | None
+    created_at: datetime
+
+
+# ---------- Staff List ----------
+class StaffOut(BaseModel):
+    id: int
+    name: str
+    role: str
+    department_name: str | None
+    workload_hours: float
+
+
+# ---------- Department Detail ----------
+class DepartmentDetail(BaseModel):
+    id: int
+    name: str
+    head: str
+    specialization: str | None
+    staff_count: int
+    complaint_count: int
+
+
+# ---------- Performance ----------
+class PerformanceItem(BaseModel):
+    staff_name: str
+    department: str
+    resolved_count: int
+    avg_resolution_hours: float

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+ import React, { useState, useEffect, useCallback } from "react";
 import {
   fetchDepartments,
   fetchStats,
@@ -12,8 +12,28 @@ import WorkloadPieChart from "./components/WorkloadPieChart";
 import ResolutionTrendChart from "./components/ResolutionTrendChart";
 import DepartmentActivityChart from "./components/DepartmentActivityChart";
 import Filters from "./components/Filters";
+import ComplaintsPage from "./pages/ComplaintsPage";
+import StaffPage from "./pages/StaffPage";
+import TrendsPage from "./pages/TrendsPage";
+import DepartmentsPage from "./pages/DepartmentsPage";
+import PerformancePage from "./pages/PerformancePage";
+import SettingsPage from "./pages/SettingsPage";
+import ExportPage from "./pages/ExportPage";
+
+const PAGE_TITLES = {
+  dashboard: "Analytics Dashboard",
+  complaints: "Complaints Management",
+  staff: "Staff Directory",
+  trends: "Resolution Trends",
+  departments: "Department Overview",
+  performance: "Staff Performance",
+  settings: "Settings",
+  export: "Export Reports",
+};
 
 export default function App() {
+  const [activePage, setActivePage] = useState("dashboard");
+
   // ── filter state ──
   const [departments, setDepartments] = useState([]);
   const [departmentId, setDepartmentId] = useState("");
@@ -41,8 +61,9 @@ export default function App() {
     return p;
   }, [departmentId, startDate, endDate]);
 
-  // Fetch all dashboard data whenever filters change
+  // Fetch dashboard data only when on dashboard page
   useEffect(() => {
+    if (activePage !== "dashboard") return;
     setLoading(true);
     const params = buildParams();
 
@@ -60,7 +81,7 @@ export default function App() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [buildParams]);
+  }, [buildParams, activePage]);
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -69,15 +90,65 @@ export default function App() {
     day: "numeric",
   });
 
+  const renderPage = () => {
+    switch (activePage) {
+      case "complaints":
+        return <ComplaintsPage />;
+      case "staff":
+        return <StaffPage />;
+      case "trends":
+        return <TrendsPage />;
+      case "departments":
+        return <DepartmentsPage />;
+      case "performance":
+        return <PerformancePage />;
+      case "settings":
+        return <SettingsPage />;
+      case "export":
+        return <ExportPage />;
+      default:
+        return (
+          <>
+            <Filters
+              departments={departments}
+              departmentId={departmentId}
+              setDepartmentId={setDepartmentId}
+              startDate={startDate}
+              setStartDate={setStartDate}
+              endDate={endDate}
+              setEndDate={setEndDate}
+            />
+            {loading ? (
+              <div className="loading">
+                <div className="loading-spinner"></div>
+                Loading dashboard data...
+              </div>
+            ) : (
+              <>
+                <KpiCards stats={stats} />
+                <div className="charts-row">
+                  <WorkloadPieChart data={workload} />
+                  <ResolutionTrendChart data={trends} />
+                </div>
+                <div className="charts-row">
+                  <DepartmentActivityChart data={activity} />
+                </div>
+              </>
+            )}
+          </>
+        );
+    }
+  };
+
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar activePage={activePage} onNavigate={setActivePage} />
 
       <main className="main-content">
         {/* Top Bar */}
         <div className="top-bar">
           <div className="top-bar-left">
-            <h1>Analytics Dashboard</h1>
+            <h1>{PAGE_TITLES[activePage] || "Dashboard"}</h1>
             <p>{today}</p>
           </div>
           <div className="top-bar-right">
@@ -88,41 +159,9 @@ export default function App() {
           </div>
         </div>
 
-        {/* Dashboard Body */}
+        {/* Page Body */}
         <div className="dashboard-body">
-          {/* Filters */}
-          <Filters
-            departments={departments}
-            departmentId={departmentId}
-            setDepartmentId={setDepartmentId}
-            startDate={startDate}
-            setStartDate={setStartDate}
-            endDate={endDate}
-            setEndDate={setEndDate}
-          />
-
-          {loading ? (
-            <div className="loading">
-              <div className="loading-spinner"></div>
-              Loading dashboard data…
-            </div>
-          ) : (
-            <>
-              {/* KPI Cards */}
-              <KpiCards stats={stats} />
-
-              {/* Charts Row: Pie + Line */}
-              <div className="charts-row">
-                <WorkloadPieChart data={workload} />
-                <ResolutionTrendChart data={trends} />
-              </div>
-
-              {/* Full-width Bar Chart */}
-              <div className="charts-row">
-                <DepartmentActivityChart data={activity} />
-              </div>
-            </>
-          )}
+          {renderPage()}
         </div>
       </main>
     </div>

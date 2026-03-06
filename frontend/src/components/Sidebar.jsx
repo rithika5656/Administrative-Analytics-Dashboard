@@ -1,51 +1,67 @@
 import React from "react";
+import {
+  IconHospital,
+  IconDashboard,
+  IconClipboard,
+  IconUsers,
+  IconTrending,
+  IconBuilding,
+  IconZap,
+  IconSettings,
+  IconDownload,
+} from "./Icons";
 
-export default function Sidebar() {
+const NAV_ITEMS = [
+  { section: "Main" },
+  { key: "dashboard", label: "Dashboard", icon: IconDashboard },
+  { key: "complaints", label: "Complaints", icon: IconClipboard },
+  { key: "staff", label: "Staff", icon: IconUsers },
+  { section: "Analytics" },
+  { key: "trends", label: "Trends", icon: IconTrending },
+  { key: "departments", label: "Departments", icon: IconBuilding },
+  { key: "performance", label: "Performance", icon: IconZap },
+  { section: "Administration" },
+  { key: "settings", label: "Settings", icon: IconSettings },
+  { key: "export", label: "Export Reports", icon: IconDownload },
+];
+
+export default function Sidebar({ activePage, onNavigate }) {
   return (
     <aside className="sidebar">
       {/* Brand */}
       <div className="sidebar-brand">
-        <div className="brand-icon">🏥</div>
+        <div className="brand-icon">
+          <IconHospital size={22} />
+        </div>
         <h2>MedAdmin</h2>
         <span>Analytics Platform</span>
       </div>
 
       {/* Navigation */}
       <nav className="sidebar-nav">
-        <div className="nav-section">Main</div>
-        <div className="nav-item active">
-          <span className="nav-icon">📊</span> Dashboard
-        </div>
-        <div className="nav-item">
-          <span className="nav-icon">📋</span> Complaints
-        </div>
-        <div className="nav-item">
-          <span className="nav-icon">👥</span> Staff
-        </div>
-
-        <div className="nav-section">Analytics</div>
-        <div className="nav-item">
-          <span className="nav-icon">📈</span> Trends
-        </div>
-        <div className="nav-item">
-          <span className="nav-icon">🏢</span> Departments
-        </div>
-        <div className="nav-item">
-          <span className="nav-icon">⚡</span> Performance
-        </div>
-
-        <div className="nav-section">Administration</div>
-        <div className="nav-item">
-          <span className="nav-icon">⚙️</span> Settings
-        </div>
-        <div className="nav-item">
-          <span className="nav-icon">📤</span> Export Reports
-        </div>
+        {NAV_ITEMS.map((item, i) =>
+          item.section ? (
+            <div key={`s-${i}`} className="nav-section">
+              {item.section}
+            </div>
+          ) : (
+            <div
+              key={item.key}
+              className={`nav-item${activePage === item.key ? " active" : ""}`}
+              onClick={() => onNavigate(item.key)}
+            >
+              <span className="nav-icon">
+                <item.icon size={18} />
+              </span>
+              {item.label}
+            </div>
+          )
+        )}
       </nav>
 
       {/* Footer */}
       <div className="sidebar-footer">
-        MedAdmin v1.0 · Hospital Analytics
+        MedAdmin v1.0 &middot; Hospital Analytics
       </div>
     </aside>
   );

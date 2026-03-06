@@ -16,6 +16,10 @@ from schemas import (
     WorkloadItem,
     ResolutionTrendItem,
     DepartmentActivityItem,
+    ComplaintOut,
+    StaffOut,
+    DepartmentDetail,
+    PerformanceItem,
 )
 
 # Create tables if they don't exist yet
@@ -199,6 +203,133 @@ def dashboard_department_activity(
             resolved=r.resolved,
             closed=r.closed,
             total=r.total,
+        )
+        for r in rows
+    ]
+
+
+@app.get("/complaints", response_model=list[ComplaintOut])
+def list_complaints(
+    department_id: Optional[int] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """List all complaints with department & staff names."""
+    q = (
+        db.query(
+            Complaint.id,
+            Complaint.title,
+            Complaint.description,
+            Complaint.severity,
+            Complaint.status,
+            Department.name.label("department_name"),
+            Staff.name.label("assigned_staff_name"),
+            Complaint.created_at,
+        )
+        .outerjoin(Department, Department.id == Complaint.department_id)
+        .outerjoin(Staff, Staff.id == Complaint.assigned_staff_id)
+    )
+    if department_id is not None:
+        q = q.filter(Complaint.department_id == department_id)
+    if start_date is not None:
+        q = q.filter(Complaint.created_at >= start_date)
+    if end_date is not None:
+        q = q.filter(Complaint.created_at <= end_date)
+
+    rows = q.order_by(Complaint.created_at.desc()).all()
+    return [
+        ComplaintOut(
+            id=r.id, title=r.title, description=r.description,
+            severity=r.severity, status=r.status,
+            department_name=r.department_name,
+            assigned_staff_name=r.assigned_staff_name,
+            created_at=r.created_at,
+        )
+        for r in rows
+    ]
+
+
+@app.get("/staff", response_model=list[StaffOut])
+def list_staff(
+    department_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """List all staff members with department names."""
+    q = (
+        db.query(
+            Staff.id,
+            Staff.name,
+            Staff.role,
+            Department.name.label("department_name"),
+            Staff.workload_hours,
+        )
+        .outerjoin(Department, Department.id == Staff.department_id)
+    )
+    if department_id is not None:
+        q = q.filter(Staff.department_id == department_id)
+
+    rows = q.order_by(Staff.name).all()
+    return [
+        StaffOut(
+            id=r.id, name=r.name, role=r.role,
+            department_name=r.department_name,
+            workload_hours=round(r.workload_hours, 1),
+        )
+        for r in rows
+    ]
+
+
+@app.get("/departments/details", response_model=list[DepartmentDetail])
+def department_details(db: Session = Depends(get_db)):
+    """Department list with staff & complaint counts."""
+    rows = (
+        db.query(
+            Department.id,
+            Department.name,
+            Department.head,
+            Department.specialization,
+            func.count(func.distinct(Staff.id)).label("staff_count"),
+            func.count(func.distinct(Complaint.id)).label("complaint_count"),
+        )
+        .outerjoin(Staff, Staff.department_id == Department.id)
+        .outerjoin(Complaint, Complaint.department_id == Department.id)
+        .group_by(Department.id)
+        .order_by(Department.name)
+        .all()
+    )
+    return [
+        DepartmentDetail(
+            id=r.id, name=r.name, head=r.head,
+            specialization=r.specialization,
+            staff_count=r.staff_count,
+            complaint_count=r.complaint_count,
+        )
+        for r in rows
+    ]
+
+
+@app.get("/performance", response_model=list[PerformanceItem])
+def staff_performance(db: Session = Depends(get_db)):
+    """Staff performance — resolution counts and avg hours."""
+    rows = (
+        db.query(
+            Staff.name.label("staff_name"),
+            Department.name.label("department"),
+            func.count(IssueResolution.id).label("resolved_count"),
+            func.avg(IssueResolution.resolution_hours).label("avg_resolution_hours"),
+        )
+        .join(IssueResolution, IssueResolution.resolved_by_staff_id == Staff.id)
+        .outerjoin(Department, Department.id == Staff.department_id)
+        .group_by(Staff.id)
+        .order_by(func.count(IssueResolution.id).desc())
+        .all()
+    )
+    return [
+        PerformanceItem(
+            staff_name=r.staff_name, department=r.department,
+            resolved_count=r.resolved_count,
+            avg_resolution_hours=round(r.avg_resolution_hours, 1),
         )
         for r in rows
     ]

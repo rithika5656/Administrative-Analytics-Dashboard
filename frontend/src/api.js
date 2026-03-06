@@ -21,3 +21,19 @@ export function fetchResolutionTrends(params) {
 export function fetchDepartmentActivity(params) {
   return API.get("/dashboard/department-activity", { params }).then((r) => r.data);
 }
+
+export function fetchComplaints(params) {
+  return API.get("/complaints", { params }).then((r) => r.data);
+}
+
+export function fetchStaff(params) {
+  return API.get("/staff", { params }).then((r) => r.data);
+}
+
+export function fetchDepartmentDetails() {
+  return API.get("/departments/details").then((r) => r.data);
+}
+
+export function fetchPerformance() {
+  return API.get("/performance").then((r) => r.data);
+}

@@ -1,4 +1,5 @@
 import React from "react";
+import { IconClipboard, IconAlert, IconClock, IconUsers } from "./Icons";
 
 export default function KpiCards({ stats }) {
   if (!stats) return null;
@@ -8,28 +9,28 @@ export default function KpiCards({ stats }) {
       label: "Total Complaints",
       value: stats.total_complaints,
       color: "blue",
-      icon: "📋",
+      icon: <IconClipboard size={22} />,
       sub: `${stats.total_departments} departments tracked`,
     },
     {
       label: "Open Issues",
       value: stats.open_complaints,
       color: "red",
-      icon: "🚨",
+      icon: <IconAlert size={22} />,
       sub: `${stats.in_progress_complaints} in progress`,
     },
     {
       label: "Avg Resolution",
       value: `${stats.avg_resolution_hours}h`,
       color: "amber",
-      icon: "⏱️",
+      icon: <IconClock size={22} />,
       sub: `${stats.resolved_complaints + stats.closed_complaints} resolved total`,
     },
     {
       label: "Total Staff",
       value: stats.total_staff,
       color: "green",
-      icon: "👥",
+      icon: <IconUsers size={22} />,
       sub: `Across ${stats.total_departments} departments`,
     },
   ];
